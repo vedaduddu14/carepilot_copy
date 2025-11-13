@@ -104,6 +104,27 @@ def start_chat(scenario):
 
     return redirect(url_for('getPreSurvey', session_id=session_id) + clientParam)
 
+@app.route('/test/<scenario>/')
+def test_chat(scenario):
+    """Direct test route that bypasses pre-task survey for quick testing"""
+    val_pwd = request.args.get('pwd')
+    if val_pwd != common.ADMIN_PWD:
+        return "Access restricted to participants", 401
+
+    clientQueue = common.get_study_queue(scenario)
+    # random.shuffle(clientQueue)
+    client = clientQueue.pop(0)
+    session_id = str(uuid4())   ### unique to each user/participant/representative
+    current_client = client
+    session[session_id] = {}
+    session[session_id]['current_client'] = current_client
+    session[session_id]['client_queue'] = clientQueue
+
+    clientParam = f"?name={client['name']}&domain={client['domain']}&category={client['category']}&grateful={client['grateful']}&ranting={client['ranting']}&expression={client['expression']}&civil={client['civil']}&info={client['info']}&emo={client['emo']}"
+
+    # Skip survey and go directly to chat
+    return redirect(url_for('index', session_id=session_id) + clientParam)
+
 @app.route('/summative/phase1/get-tsv/')
 def get_tsv():
     return send_from_directory('', 'phase1_scenarios.tsv')
