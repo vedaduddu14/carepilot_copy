@@ -71,14 +71,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(data => {
             console.log('Success:', data);
-            alert('Feedback submitted successfully!');
-
-            if (submitterButton == "completeButton") {
-                completeSurvey();
-            }
-            else {
-                updateClientQueue();
-            }
+            // Removed alert - go directly to Q2
+            // Both buttons now go to Q2 (round survey)
+            updateClientQueue();
         })
         .catch((error) => {
             console.error('Error:', error);

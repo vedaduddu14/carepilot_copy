@@ -35,17 +35,19 @@ randomQueue = [
 ]
 
 '''
-For actual study scenario.
-Unlike testing we will keep "grateful": 0, "ranting": 1, "expression":1
-Other conditions will maintain fixed order in the queue
+For actual study scenario - 2 ROUNDS DESIGN
+Round 1: Client WITHOUT AI (info=0, emo=0) - Baseline
+Round 2: Client WITH treatment (info/emo based on assignment)
+
+All clients: "grateful": 0, "ranting": 1, "expression":1, "civil": 0 (uncivil/mad)
+Same difficulty for both rounds
 '''
 studyQueue = [
-    { "id": 1, "grateful": 0, "ranting": 1, "expression":1, "civil": 1, "info": 1, "emo": 0},
-    { "id": 1, "grateful": 0, "ranting": 1, "expression":1, "civil": 1, "info": 1, "emo": 0},
-    { "id": 1, "grateful": 0, "ranting": 1, "expression":1, "civil": 0, "info": 1, "emo": 0},
-    { "id": 1, "grateful": 0, "ranting": 1, "expression":1, "civil": 0, "info": 1, "emo": 1},
-    { "id": 1, "grateful": 0, "ranting": 1, "expression":1, "civil": 0, "info": 1, "emo": 1},
-    { "id": 1, "grateful": 0, "ranting": 1, "expression":1, "civil": 0, "info": 1, "emo": 1}
+    # Round 1 Client - NO AI (will be forced to info=0, emo=0 regardless of assignment)
+    { "id": 1, "round": 1, "grateful": 0, "ranting": 1, "expression":1, "civil": 0, "info": 0, "emo": 0},
+
+    # Round 2 Client - WITH treatment (info/emo set based on treatment assignment)
+    { "id": 2, "round": 2, "grateful": 0, "ranting": 1, "expression":1, "civil": 0, "info": 0, "emo": 0}
 ]
 
 complaintTypes = [
@@ -57,17 +59,22 @@ complaintTypes = [
 ]
 
 def get_study_queue(scenario):
-    names = [client['name'] for client  in randomQueue]
+    """
+    Generate study queue with 2 clients (1 per round)
+    Both clients use same scenario, same difficulty
+    """
+    names = [client['name'] for client in randomQueue]
     random.shuffle(names)
     random.shuffle(complaintTypes)
 
+    # Only 2 clients now (one per round)
     for client_id in range(len(studyQueue)):
         client_name = names[client_id % len(names)]
         complaint_type = complaintTypes[client_id % len(complaintTypes)]
 
         studyQueue[client_id]['category'] = complaint_type
-        client_name = names[client_id]
         studyQueue[client_id]['name'] = client_name
         studyQueue[client_id]['domain'] = scenario
         studyQueue[client_id]['avatar'] = "https://avatar.iran.liara.run/username?username="+client_name.replace(' ','+')
+
     return copy.deepcopy(studyQueue)

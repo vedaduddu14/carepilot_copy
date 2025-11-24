@@ -287,27 +287,20 @@ function createFooter(support_type) {
   sliderContainer.style.padding = '0 4px';
 
   const leftLabel = document.createElement('span');
-  leftLabel.textContent = 'Helpful';
-  leftLabel.style.marginRight = '4px';
-  leftLabel.style.width = '4em';
+  leftLabel.textContent = '0';
+  leftLabel.style.marginRight = '8px';
+  leftLabel.style.width = '2em';
   leftLabel.classList.add('slider-label');
   sliderContainer.appendChild(leftLabel);
-
-  const leftLabelIcon = document.createElement('span');
-  leftLabelIcon.classList.add('icon', 'is-small', 'slider-icon');
-    var icon = document.createElement('i');
-    icon.classList.add('fas', "fa-thumbs-up");
-    leftLabelIcon.appendChild(icon);
-    sliderContainer.appendChild(leftLabelIcon);
 
   const input = document.createElement('input');
   input.id = `${support_type}-feedback`;
   input.setAttribute('type', 'range');
   input.classList.add('slider');
   input.setAttribute('name', `${support_type}-helpful_unhelpful`);
-  input.setAttribute('min', '-2');
-  input.setAttribute('max', '2');
-  input.setAttribute('value', '0');
+  input.setAttribute('min', '0');
+  input.setAttribute('max', '100');
+  input.setAttribute('value', '50');
   input.setAttribute('step', '1');
   input.style.margin = '0 4px';
   input.style.width = 'fit-content';
@@ -318,18 +311,11 @@ function createFooter(support_type) {
   sliderContainer.appendChild(input);
 
   const rightLabel = document.createElement('span');
-  rightLabel.textContent = 'Unhelpful';
-  rightLabel.style.marginLeft = '4px';
-  rightLabel.style.width = '4em';
+  rightLabel.textContent = '100';
+  rightLabel.style.marginLeft = '8px';
+  rightLabel.style.width = '2em';
   rightLabel.classList.add('slider-label');
   sliderContainer.appendChild(rightLabel);
-
-  const rightLabelIcon = document.createElement('span');
-  rightLabelIcon.classList.add('icon', 'is-small', 'slider-icon');
-    var icon = document.createElement('i');
-    icon.classList.add('fas', "fa-thumbs-down");
-    rightLabelIcon.appendChild(icon);
-    sliderContainer.appendChild(rightLabelIcon);
 
   footerItem.appendChild(sliderContainer);
   footer.appendChild(footerItem);
@@ -743,11 +729,13 @@ function sendMessage() {
     .then(data => {
         const isFinish = data.message.includes("FINISH:999");
         if(isFinish) {
-            const modal = document.querySelector('#finish-modal');
-            modal.classList.add("is-active");
-
+            // NEW FLOW: Skip modal, go directly to Q2 (round survey)
             typing.style.display = 'none';
             input.disabled = true;
+
+            // Redirect to round survey
+            const sessionId = window.location.pathname.split('/')[2];
+            window.location.href = `/round-survey/${sessionId}/`;
         } else {
             processClientResponse(data);
         }

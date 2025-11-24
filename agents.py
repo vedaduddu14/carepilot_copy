@@ -10,36 +10,46 @@ import re
 from dotenv import load_dotenv
 load_dotenv("project.env")
 
-embeddings = lcai.AzureOpenAIEmbeddings(
-    openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
-    openai_api_version="2024-02-15-preview",
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    deployment="TEST-Embedding",
-)
+# Try to initialize Azure OpenAI - if credentials missing, set to None for testing
+try:
+    embeddings = lcai.AzureOpenAIEmbeddings(
+        openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
+        openai_api_version="2024-02-15-preview",
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        deployment="TEST-Embedding",
+    )
 
-llmchat = lcai.AzureChatOpenAI(
-    openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    azure_deployment="PROPILOT",
-    openai_api_version="2024-05-01-preview",
-    model_name="gpt-4o",
-)
-llminfo = lcai.AzureChatOpenAI(
-    openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    azure_deployment="PROPILOT",
-    openai_api_version="2024-05-01-preview",
-    model_name="gpt-4o",
-    temperature=0.1
-)
-llmemo = lcai.AzureChatOpenAI(
-    openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    azure_deployment="PROPILOT",
-    openai_api_version="2024-05-01-preview",
-    model_name="gpt-4o",
-    temperature=0.1
-)
+    llmchat = lcai.AzureChatOpenAI(
+        openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        azure_deployment="PROPILOT",
+        openai_api_version="2024-05-01-preview",
+        model_name="gpt-4o",
+    )
+    llminfo = lcai.AzureChatOpenAI(
+        openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        azure_deployment="PROPILOT",
+        openai_api_version="2024-05-01-preview",
+        model_name="gpt-4o",
+        temperature=0.1
+    )
+    llmemo = lcai.AzureChatOpenAI(
+        openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
+        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+        azure_deployment="PROPILOT",
+        openai_api_version="2024-05-01-preview",
+        model_name="gpt-4o",
+        temperature=0.1
+    )
+    print("✓ Azure OpenAI initialized successfully")
+except Exception as e:
+    print(f"⚠️  Warning: Azure OpenAI credentials not configured. AI agents disabled.")
+    print(f"   Error: {e}")
+    embeddings = None
+    llmchat = None
+    llminfo = None
+    llmemo = None
 
 
 categories = {
