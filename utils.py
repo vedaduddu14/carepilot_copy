@@ -27,38 +27,30 @@ class mLlamaModel:
         # Set HF cache directory if using shared models
         cache_dir = os.getenv("HF_HOME", "/srv/local/common_resources/models/transformers_cache")
 
-        # Try to load from HuggingFace Hub if local path doesn't work
-        try:
-            # First attempt: try loading from local path
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_path,
-                cache_dir=cache_dir,
-                local_files_only=True
-            )
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_path,
-                torch_dtype=torch.float16,
-                device_map="auto",
-                low_cpu_mem_usage=True,
-                cache_dir=cache_dir,
-                local_files_only=True
-            )
-        except Exception as e:
-            # Second attempt: try loading from HuggingFace model ID
-            print(f"   Local path failed ({e}), trying HuggingFace Hub...")
-            model_id = "meta-llama/Llama-3.1-8B-Instruct"
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                model_id,
-                cache_dir=cache_dir
-            )
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_id,
-                torch_dtype=torch.float16,
-                device_map="auto",
-                low_cpu_mem_usage=True,
-                cache_dir=cache_dir
-            )
+        # Load tokenizer
+        print("   Loading tokenizer...")
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            model_path,
+            local_files_only=True,
+            trust_remote_code=False
+        )
 
+        # Set pad token if not set
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
+        # Load model with explicit settings
+        print("   Loading model weights (this may take 1-2 minutes)...")
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            low_cpu_mem_usage=True,
+            local_files_only=True,
+            trust_remote_code=False
+        )
+
+        print("   Creating text generation pipeline...")
         # Create HuggingFace pipeline
         self.pipe = pipeline(
             "text-generation",
@@ -68,7 +60,8 @@ class mLlamaModel:
             temperature=temperature,
             do_sample=temperature > 0,
             top_p=0.9,
-            repetition_penalty=1.1
+            repetition_penalty=1.1,
+            return_full_text=False
         )
 
         # Wrap with LangChain's HuggingFacePipeline
