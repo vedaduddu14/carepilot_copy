@@ -10,9 +10,15 @@ from sentiment import analyze_sentiment_decision
 
 import config as common
 
-from pymongo import MongoClient
-# from flask_pymongo import PyMongo
-# import redis
+# Try to import MongoDB, fall back to JSON-based storage if not available
+try:
+    from pymongo import MongoClient
+    USE_MONGODB = True
+except ImportError:
+    USE_MONGODB = False
+
+# Import JSON-based database as fallback
+from json_db import JSONClient
 
 from dotenv import load_dotenv
 from uuid import uuid4
@@ -29,16 +35,28 @@ app.secret_key = 'your_secret_key1'  # Required for session to work
 app.config['SESSION_PERMANENT'] = False
 app.config['SESSION_USE_SIGNER'] = True
 
-### Redis
-app.config['SESSION_TYPE'] = 'filesystem'   ### Default Flask approach
-# app.config['SESSION_TYPE'] = 'redis'
-# app.config['SESSION_REDIS'] = redis.from_url('redis://localhost:6379')
+### Session storage
+app.config['SESSION_TYPE'] = 'filesystem'
 
 Session(app)
 
-### Mongo DB
-client = MongoClient('localhost', 27017)
-db = client.flask_db
+### Database - Use MongoDB if available, otherwise use JSON files
+if USE_MONGODB:
+    try:
+        client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=2000)
+        # Test connection
+        client.server_info()
+        db = client.flask_db
+        print("✓ Using MongoDB for data storage")
+    except Exception as e:
+        print(f"⚠️  MongoDB not available ({e}), using JSON file storage")
+        USE_MONGODB = False
+        client = JSONClient(db_dir='data')
+        db = client.flask_db
+else:
+    print("⚠️  pymongo not installed, using JSON file storage")
+    client = JSONClient(db_dir='data')
+    db = client.flask_db
 
 # Collections
 chat_post_task = db.chat_post_task
