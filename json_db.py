@@ -104,6 +104,18 @@ class JSONCollection:
         deleted_count = original_count - len(filtered_data)
         return type('DeleteResult', (), {'deleted_count': deleted_count})()
 
+    def count_documents(self, query=None):
+        """Count documents matching the query"""
+        if query is None or query == {}:
+            return len(self._read_data())
+
+        data = self._read_data()
+        count = 0
+        for doc in data:
+            if all(doc.get(k) == v for k, v in query.items()):
+                count += 1
+        return count
+
 
 class JSONDatabase:
     """Mimics MongoDB database interface"""
