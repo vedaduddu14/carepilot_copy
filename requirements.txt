@@ -6,3 +6,6 @@ python-dotenv==1.0.1
 textblob==0.18.0.post0
 torch==2.3.1
 transformers==4.41.2
+pymongo==4.6.1
+nltk==3.8.1
+accelerate==0.27.2

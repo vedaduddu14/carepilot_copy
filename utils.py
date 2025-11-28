@@ -24,14 +24,40 @@ class mLlamaModel:
     def __init__(self, model_path="/srv/local/common_resources/models/Llama-3.1-8B-Instruct", temperature=0.1, max_new_tokens=512):
         print(f"Loading Llama model from {model_path}...")
 
-        # Load tokenizer and model
-        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_path,
-            torch_dtype=torch.float16,
-            device_map="auto",
-            low_cpu_mem_usage=True
-        )
+        # Set HF cache directory if using shared models
+        cache_dir = os.getenv("HF_HOME", "/srv/local/common_resources/models/transformers_cache")
+
+        # Try to load from HuggingFace Hub if local path doesn't work
+        try:
+            # First attempt: try loading from local path
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_path,
+                cache_dir=cache_dir,
+                local_files_only=True
+            )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_path,
+                torch_dtype=torch.float16,
+                device_map="auto",
+                low_cpu_mem_usage=True,
+                cache_dir=cache_dir,
+                local_files_only=True
+            )
+        except Exception as e:
+            # Second attempt: try loading from HuggingFace model ID
+            print(f"   Local path failed ({e}), trying HuggingFace Hub...")
+            model_id = "meta-llama/Llama-3.1-8B-Instruct"
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                model_id,
+                cache_dir=cache_dir
+            )
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_id,
+                torch_dtype=torch.float16,
+                device_map="auto",
+                low_cpu_mem_usage=True,
+                cache_dir=cache_dir
+            )
 
         # Create HuggingFace pipeline
         self.pipe = pipeline(
