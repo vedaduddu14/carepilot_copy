@@ -85,21 +85,16 @@ except Exception as e:
 
 @app.route('/')
 def hello():
-    return render_template('landing.html')
+    return render_template('launch.html')
 
 @app.route('/launch/')
 def launch():
-    val_pwd = request.args.get('pwd')
-    if val_pwd == common.ADMIN_PWD:
-        return render_template('launch.html')
-    else:
-        return "Access restricted to participants", 401
+    # Password authentication removed - direct access
+    return render_template('launch.html')
 
 @app.route('/chat/<scenario>/')
 def start_chat(scenario):
-    val_pwd = request.args.get('pwd')
-    if val_pwd != common.ADMIN_PWD:
-        return "Access restricted to participants", 401
+    # Password authentication removed - direct access
 
     clientQueue = common.get_study_queue(scenario)
     client = clientQueue.pop(0)  # First client (Round 1)
