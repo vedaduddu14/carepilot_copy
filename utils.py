@@ -1,5 +1,7 @@
 import os
 import openai as oai
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 import langchain_openai as lcai
 from langchain.agents import AgentExecutor, create_openai_tools_agent
@@ -12,6 +14,45 @@ from langchain_core.messages import AIMessage, HumanMessage
 from langchain_core.runnables import RunnablePassthrough
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.tools.retriever import create_retriever_tool
+from langchain_community.llms import HuggingFacePipeline
+
+class mLlamaModel:
+    """
+    Wrapper for local Llama-3.1-8B-Instruct model using HuggingFace transformers.
+    Provides a compatible interface with Azure OpenAI clients for easy migration.
+    """
+    def __init__(self, model_path="/srv/local/common_resources/models/Llama-3.1-8B-Instruct", temperature=0.1, max_new_tokens=512):
+        print(f"Loading Llama model from {model_path}...")
+
+        # Load tokenizer and model
+        self.tokenizer = AutoTokenizer.from_pretrained(model_path)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            model_path,
+            torch_dtype=torch.float16,
+            device_map="auto",
+            low_cpu_mem_usage=True
+        )
+
+        # Create HuggingFace pipeline
+        self.pipe = pipeline(
+            "text-generation",
+            model=self.model,
+            tokenizer=self.tokenizer,
+            max_new_tokens=max_new_tokens,
+            temperature=temperature,
+            do_sample=temperature > 0,
+            top_p=0.9,
+            repetition_penalty=1.1
+        )
+
+        # Wrap with LangChain's HuggingFacePipeline
+        self.llm = HuggingFacePipeline(pipeline=self.pipe)
+
+        print("✓ Llama model loaded successfully")
+
+    def get_llm(self):
+        """Return the LangChain-compatible LLM instance"""
+        return self.llm
 
 class mOpenAI:
     """

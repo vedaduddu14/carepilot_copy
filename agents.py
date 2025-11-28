@@ -1,7 +1,7 @@
 import os
 
 import langchain_openai as lcai
-from utils import mLangChain
+from utils import mLangChain, mLlamaModel
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -10,41 +10,26 @@ import re
 from dotenv import load_dotenv
 load_dotenv("project.env")
 
-# Try to initialize Azure OpenAI - if credentials missing, set to None for testing
+# Initialize local Llama model instead of Azure OpenAI
 try:
-    embeddings = lcai.AzureOpenAIEmbeddings(
-        openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
-        openai_api_version="2024-02-15-preview",
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        deployment="TEST-Embedding",
+    # Load the local Llama model
+    llama_model = mLlamaModel(
+        model_path=os.getenv("LLAMA_MODEL_PATH", "/srv/local/common_resources/models/Llama-3.1-8B-Instruct"),
+        temperature=0.1
     )
 
-    llmchat = lcai.AzureChatOpenAI(
-        openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        azure_deployment="PROPILOT",
-        openai_api_version="2024-05-01-preview",
-        model_name="gpt-4o",
-    )
-    llminfo = lcai.AzureChatOpenAI(
-        openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        azure_deployment="PROPILOT",
-        openai_api_version="2024-05-01-preview",
-        model_name="gpt-4o",
-        temperature=0.1
-    )
-    llmemo = lcai.AzureChatOpenAI(
-        openai_api_key=os.getenv("AZURE_OPENAI_KEY"),
-        azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-        azure_deployment="PROPILOT",
-        openai_api_version="2024-05-01-preview",
-        model_name="gpt-4o",
-        temperature=0.1
-    )
-    print("✓ Azure OpenAI initialized successfully")
+    # Use the same LLM instance for all agents (you can create separate instances with different temps if needed)
+    llmchat = llama_model.get_llm()
+    llminfo = llama_model.get_llm()
+    llmemo = llama_model.get_llm()
+
+    # For embeddings, we'll need to use a local embedding model or keep Azure for now
+    # You can add a local embedding model later if needed
+    embeddings = None  # TODO: Add local embeddings model if needed
+
+    print("✓ Local Llama model initialized successfully")
 except Exception as e:
-    print(f"⚠️  Warning: Azure OpenAI credentials not configured. AI agents disabled.")
+    print(f"⚠️  Warning: Failed to load local Llama model. AI agents disabled.")
     print(f"   Error: {e}")
     embeddings = None
     llmchat = None
