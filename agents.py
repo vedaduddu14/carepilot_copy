@@ -194,15 +194,13 @@ class mAgentEP:
         return final_res
     
     def agent_coworker_emo_perspective(self):
-        client = mLangChain()
-
         prompt = """Your role is to provide the customer's perspective of the conversation.
                     Summarize this for the representative.\
                     Describe how the customer might feel.\
                     Describe how the customer might view the problem.\
-                    
+
                     Limit your response to 2 sentences.
-                    
+
                     Customer perspective:
                 """
         template = ChatPromptTemplate.from_messages(
@@ -212,20 +210,11 @@ class mAgentEP:
                 ("user", "{complaint}"),
             ]
         )
-        chain = template | client.client_completion
-
-        # chain = (RunnablePassthrough.assign(
-        #     context=get_historical_info_context_chain()
-        # )
-        #         | template
-        #         | client.client_completion
-        #         )
+        chain = template | llmemo | StrOutputParser()
 
         return chain
     
     def paraphraseResponse(self):
-        client = mLangChain()
-
         prompt = """Your role is to paraphrase given {response} using 2nd person pronouns as subject.\
                     The meaning of the sentence should NOT be changed while paraphrasing.\
                 """
@@ -235,7 +224,7 @@ class mAgentEP:
                 ("user", "{response}"),
             ]
         )
-        chain = template | client.client_completion
+        chain = template | llmemo | StrOutputParser()
         return chain
 
 class mAgentER:
@@ -520,7 +509,6 @@ class mAgentCustomer:
 
 
 def agent_sender_fewshot_twitter_categorized():
-    client = mLangChain()
     prompt = """Your role is to act like a customer seeking support. \
                 You are messaging a service representative via the support chat.\
                 You ONLY play the role of the customer. Do NOT play the role of the representative. \
@@ -611,11 +599,10 @@ def agent_sender_fewshot_twitter_categorized():
             ("system", prompt),
         ]
     )
-    chain = template | client.client_completion
+    chain = template | llmchat | StrOutputParser()
     return chain
 
 def agent_sender_fewshot_twitter():
-    client = mLangChain()
     prompt = """Your role is to act like a customer seeking support. \
                 You are messaging a service representative via the support chat.\
                 You ONLY play the role of the customer. Do NOT play the role of the representative. \
@@ -678,6 +665,6 @@ def agent_sender_fewshot_twitter():
             ("system", prompt),
         ]
     )
-    chain = template | client.client_completion
+    chain = template | llmchat | StrOutputParser()
     return chain
 
