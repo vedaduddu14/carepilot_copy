@@ -511,15 +511,19 @@ def getReply(session_id):
         try:
             result = sender_agent.invoke({"input": prompt, "chat_history": chat_history, "civil": session[session_id][client_id]["civil"]})
             response = result
-            # Post-process: Extract only the first response (stop at "Representative:" if model over-generates)
-            if "Representative:" in response:
-                response = response.split("Representative:")[0].strip()
-            if "Customer:" in response:
-                # Take only the first customer response
-                response = response.split("Customer:")[0].strip()
-            # Also stop at excessive newlines
+            # Post-process: Clean up model output
+            # Remove any prompt echoes or labels
+            cleanup_patterns = ["Representative:", "Customer:", "How would you respond", "Respond now", "Response:"]
+            for pattern in cleanup_patterns:
+                if pattern in response:
+                    response = response.split(pattern)[0].strip()
+            # Stop at excessive newlines
             if "\n\n" in response:
                 response = response.split("\n\n")[0].strip()
+            # Take only first line if multiple lines
+            if "\n" in response:
+                lines = [l.strip() for l in response.split("\n") if l.strip()]
+                response = lines[0] if lines else response
         except Exception as e:
             # Simple mock conversation logic
             print(f"⚠️  Azure OpenAI failed, using mock client response: {str(e)[:100]}")

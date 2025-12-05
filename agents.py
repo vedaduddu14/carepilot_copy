@@ -426,26 +426,12 @@ class mAgentCustomer:
         return contextualize_q_chain
     
     def get_civil_chain(self):
-        qa_info_prompt = """
-            You are a CUSTOMER seeking support, speaking to a support REPRESENTATIVE.
-            
-            CRITICAL: Generate ONLY ONE short response (1-3 sentences). Do NOT generate a full conversation.
-            Do NOT include "Representative:" or "Customer:" labels. Just output your response text.
-            
-            If the representative asks for details, provide a believable answer.
-            Stay in character as a civil, polite customer.
-            
-            Only say "FINISH:999" after 5+ exchanges when you're satisfied with a concrete solution.
-            
-            Respond now with ONE message:
-        """
+        qa_info_prompt = """You are a polite customer with a complaint. Respond to the representative in 1-2 sentences only. Be civil and cooperative."""
         qa_info = ChatPromptTemplate.from_messages(
             [
                 ("system", qa_info_prompt),
                 MessagesPlaceholder(variable_name="chat_history"),
-                ("user", '''
-                    Representative asked: {question}
-                '''),
+                ("user", "{question}"),
             ]
         )
         rag_chain_info = (
@@ -458,26 +444,12 @@ class mAgentCustomer:
         return rag_chain_info
     
     def get_uncivil_chain(self):
-        qa_info_prompt = """
-            You are an ANGRY CUSTOMER seeking support, speaking to a support REPRESENTATIVE.
-            
-            CRITICAL: Generate ONLY ONE short response (1-3 sentences). Do NOT generate a full conversation.
-            Do NOT include "Representative:" or "Customer:" labels. Just output your response text.
-            
-            If the representative asks for details, provide a believable answer.
-            Stay in character as an uncivil, rude, impatient customer. Be frustrated and demanding.
-            
-            Only say "FINISH:999" after 5+ exchanges when you're satisfied with a concrete solution.
-            
-            Respond now with ONE angry message:
-        """
+        qa_info_prompt = """You are an angry, frustrated customer with a complaint. Respond rudely to the representative in 1-2 sentences only. Be impatient and demanding."""
         qa_info = ChatPromptTemplate.from_messages(
             [
                 ("system", qa_info_prompt),
                 MessagesPlaceholder(variable_name="chat_history"),
-                ("user", '''
-                    Representative asked: {question}
-                '''),
+                ("user", "{question}"),
             ]
         )
         rag_chain_info = (
