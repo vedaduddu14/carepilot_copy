@@ -10,14 +10,15 @@ from sentiment import analyze_sentiment_decision
 
 import config as common
 
-# Try to import MongoDB, fall back to JSON-based storage if not available
-try:
-    from pymongo import MongoClient
-    USE_MONGODB = True
-except ImportError:
-    USE_MONGODB = False
+# DISABLED MongoDB - Using JSON file storage only
+# try:
+#     from pymongo import MongoClient
+#     USE_MONGODB = True
+# except ImportError:
+#     USE_MONGODB = False
+USE_MONGODB = False
 
-# Import JSON-based database as fallback
+# Import JSON-based database
 from json_db import JSONClient
 
 from dotenv import load_dotenv
@@ -40,23 +41,10 @@ app.config['SESSION_TYPE'] = 'filesystem'
 
 Session(app)
 
-### Database - Use MongoDB if available, otherwise use JSON files
-if USE_MONGODB:
-    try:
-        client = MongoClient('localhost', 27017, serverSelectionTimeoutMS=2000)
-        # Test connection
-        client.server_info()
-        db = client.flask_db
-        print("✓ Using MongoDB for data storage")
-    except Exception as e:
-        print(f"⚠️  MongoDB not available ({e}), using JSON file storage")
-        USE_MONGODB = False
-        client = JSONClient(db_dir='data')
-        db = client.flask_db
-else:
-    print("⚠️  pymongo not installed, using JSON file storage")
-    client = JSONClient(db_dir='data')
-    db = client.flask_db
+### Database - JSON file storage only (MongoDB disabled)
+print("📁 Using JSON file storage for data")
+client = JSONClient(db_dir='data')
+db = client.flask_db
 
 # Collections
 chat_post_task = db.chat_post_task

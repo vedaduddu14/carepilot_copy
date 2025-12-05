@@ -39,17 +39,30 @@ class mLlamaModel:
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        # Load model with explicit settings
+        # Load model with GPU support
         print("   Loading model weights (this may take 1-2 minutes)...")
-        # Force CPU usage due to CUDA incompatibility with newer GPU architectures
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_path,
-            torch_dtype=torch.float32,  # Use float32 for CPU
-            device_map="cpu",  # Force CPU since GPU architecture is too new for PyTorch
-            low_cpu_mem_usage=True,
-            local_files_only=True,
-            trust_remote_code=True
-        )
+        
+        # Check if CUDA is available
+        if torch.cuda.is_available():
+            print(f"   ✓ CUDA available - using GPU: {torch.cuda.get_device_name(0)}")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_path,
+                torch_dtype=torch.float16,  # Use half precision for GPU
+                device_map="auto",  # Automatically distribute across available GPUs
+                low_cpu_mem_usage=True,
+                local_files_only=True,
+                trust_remote_code=True
+            )
+        else:
+            print("   ⚠️  CUDA not available - falling back to CPU (will be slow)")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_path,
+                torch_dtype=torch.float32,
+                device_map="cpu",
+                low_cpu_mem_usage=True,
+                local_files_only=True,
+                trust_remote_code=True
+            )
 
         print("   Creating text generation pipeline...")
         # Create HuggingFace pipeline
