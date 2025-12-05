@@ -56,7 +56,8 @@ categories = {
 }
 
 def extract_cues(chain_output):
-    cues_text = chain_output.content
+    # Handle both string output (HuggingFace) and message object (OpenAI)
+    cues_text = chain_output.content if hasattr(chain_output, 'content') else str(chain_output)
     # Assuming each cue is separated by a newline in the chain_output.
     cues = cues_text.split('\n')
     # Filter out any empty strings or whitespace-only strings
@@ -509,7 +510,8 @@ class mAgentCustomer:
         else:
             ai_msg = self.uncivil_chain.invoke({"chat_history": user_input['chat_history'], "question": user_input['input'], "civil": user_input['civil']})
 
-        return ai_msg.content
+        # Handle both string output (HuggingFace) and message object (OpenAI)
+        return ai_msg.content if hasattr(ai_msg, 'content') else str(ai_msg)
 
     def __init__(self):
             self.history_chain = self.get_historical_context_chain()
