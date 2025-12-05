@@ -39,22 +39,32 @@ class mLlamaModel:
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        # Load model with GPU support
+        # Load model with GPU support (with fallback to CPU)
         print("   Loading model weights (this may take 1-2 minutes)...")
         
-        # Check if CUDA is available
-        if torch.cuda.is_available():
-            print(f"   ✓ CUDA available - using GPU: {torch.cuda.get_device_name(0)}")
-            self.model = AutoModelForCausalLM.from_pretrained(
-                model_path,
-                torch_dtype=torch.float16,  # Use half precision for GPU
-                device_map="auto",  # Automatically distribute across available GPUs
-                low_cpu_mem_usage=True,
-                local_files_only=True,
-                trust_remote_code=True
-            )
-        else:
-            print("   ⚠️  CUDA not available - falling back to CPU (will be slow)")
+        # Try GPU first, fall back to CPU if CUDA fails
+        use_gpu = torch.cuda.is_available()
+        
+        if use_gpu:
+            try:
+                print(f"   ✓ CUDA available - attempting GPU: {torch.cuda.get_device_name(0)}")
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    model_path,
+                    torch_dtype=torch.float16,  # Use half precision for GPU
+                    device_map="auto",  # Automatically distribute across available GPUs
+                    low_cpu_mem_usage=True,
+                    local_files_only=True,
+                    trust_remote_code=True
+                )
+                # Test that the model works on GPU
+                print("   ✓ GPU model loaded successfully")
+            except Exception as e:
+                print(f"   ⚠️  GPU loading failed: {str(e)[:100]}")
+                print("   ⚠️  Falling back to CPU (will be slower)...")
+                use_gpu = False
+        
+        if not use_gpu:
+            print("   📍 Loading model on CPU...")
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_path,
                 torch_dtype=torch.float32,
@@ -63,6 +73,7 @@ class mLlamaModel:
                 local_files_only=True,
                 trust_remote_code=True
             )
+            print("   ✓ CPU model loaded successfully")
 
         print("   Creating text generation pipeline...")
         # Create HuggingFace pipeline
