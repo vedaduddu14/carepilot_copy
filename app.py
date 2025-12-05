@@ -436,6 +436,12 @@ def getReply(session_id):
         # Try to use Azure OpenAI, fall back to mock if connection fails
         try:
             response = sender_initial.invoke(complaint_parameters)
+            # Post-process: Extract only the first complaint (stop at "Category:" if model over-generates)
+            if "Category:" in response:
+                response = response.split("Category:")[0].strip()
+            # Also stop at double newlines
+            if "\n\n" in response:
+                response = response.split("\n\n")[0].strip()
         except Exception as e:
             # Mock initial complaint based on domain and category
             print(f"⚠️  Azure OpenAI failed, using mock client complaint: {str(e)[:100]}")

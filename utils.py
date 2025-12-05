@@ -85,7 +85,11 @@ class mLlamaModel:
             print("   ✓ CPU model loaded successfully")
 
         print("   Creating text generation pipeline...")
-        # Create HuggingFace pipeline
+        
+        # Define stop sequences to prevent over-generation
+        stop_sequences = ["\n\nCategory:", "\nCategory:", "Category:", "\n\n\n"]
+        
+        # Create HuggingFace pipeline with stop sequences
         self.pipe = pipeline(
             "text-generation",
             model=self.model,
@@ -95,11 +99,15 @@ class mLlamaModel:
             do_sample=temperature > 0,
             top_p=0.9,
             repetition_penalty=1.1,
-            return_full_text=False
+            return_full_text=False,
+            eos_token_id=self.tokenizer.eos_token_id,
         )
 
-        # Wrap with LangChain's HuggingFacePipeline
-        self.llm = HuggingFacePipeline(pipeline=self.pipe)
+        # Wrap with LangChain's HuggingFacePipeline with stop sequences
+        self.llm = HuggingFacePipeline(
+            pipeline=self.pipe,
+            pipeline_kwargs={"stop_sequence": stop_sequences[0]}  # Stop at first "Category:"
+        )
 
         print("✓ Llama model loaded successfully")
 
