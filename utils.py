@@ -32,7 +32,7 @@ class mLlamaModel:
         self.tokenizer = AutoTokenizer.from_pretrained(
             model_path,
             local_files_only=True,
-            trust_remote_code=False
+            trust_remote_code=True
         )
 
         # Set pad token if not set
@@ -47,7 +47,7 @@ class mLlamaModel:
             device_map="auto",
             low_cpu_mem_usage=True,
             local_files_only=True,
-            trust_remote_code=False
+            trust_remote_code=True
         )
 
         print("   Creating text generation pipeline...")
