@@ -427,30 +427,17 @@ class mAgentCustomer:
     
     def get_civil_chain(self):
         qa_info_prompt = """
-            Your role is to act like a CLIENT seeking support. \
-            You are speaking to a support REPRESENTATIVE. \
-            Respond to the question as if you were the customer. \
-            Do NOT reveal your role.\
+            You are a CUSTOMER seeking support, speaking to a support REPRESENTATIVE.
             
-            If the representative is asking for a specific detail, respond with a believable answer.\
+            CRITICAL: Generate ONLY ONE short response (1-3 sentences). Do NOT generate a full conversation.
+            Do NOT include "Representative:" or "Customer:" labels. Just output your response text.
             
-            IMPORTANT: Do NOT end the conversation early. Keep the conversation going for at least 5-6 turns.
-            Only respond with "FINISH:999" when ALL of these conditions are met:
-            1. The representative has offered a concrete solution (refund, compensation, fix)
-            2. You (the customer) are satisfied with the proposed resolution
-            3. At least 5 turns have passed
+            If the representative asks for details, provide a believable answer.
+            Stay in character as a civil, polite customer.
             
-            After 10-12 turns, start wrapping up the conversation.
-            After 12 turns, respond with "FINISH:999" to end.\
+            Only say "FINISH:999" after 5+ exchanges when you're satisfied with a concrete solution.
             
-            Phrase your responses like an CIVIL customer:\
-            - Talk in a gentle, polite, and respectful tone of voice.\
-            - Do use good manners.\
-            - Do use courtesy.\
-            - Act with regard to others.\
-            
-            Representative: {question}
-            Customer:
+            Respond now with ONE message:
         """
         qa_info = ChatPromptTemplate.from_messages(
             [
@@ -472,31 +459,17 @@ class mAgentCustomer:
     
     def get_uncivil_chain(self):
         qa_info_prompt = """
-            Your role is to act like a CUSTOMER seeking support. \
-            You are speaking to a support REPRESENTATIVE. \
-            Respond to the question as if you were the customer. \
-            Do NOT reveal your role.\
-            Ensure every turn is one to three sentences, and DO NOT make it too long to read.\
+            You are an ANGRY CUSTOMER seeking support, speaking to a support REPRESENTATIVE.
             
-            If the representative is asking for a specific detail, respond with a believable answer.\
+            CRITICAL: Generate ONLY ONE short response (1-3 sentences). Do NOT generate a full conversation.
+            Do NOT include "Representative:" or "Customer:" labels. Just output your response text.
             
-            IMPORTANT: Do NOT end the conversation early. Keep the conversation going for at least 5-6 turns.
-            Only respond with "FINISH:999" when ALL of these conditions are met:
-            1. The representative has offered a concrete solution (refund, compensation, fix)
-            2. You (the customer) are satisfied with the proposed resolution
-            3. At least 5 turns have passed
+            If the representative asks for details, provide a believable answer.
+            Stay in character as an uncivil, rude, impatient customer. Be frustrated and demanding.
             
-            After 10-12 turns, start wrapping up the conversation.
-            After 12 turns, respond with "FINISH:999" to end.\
+            Only say "FINISH:999" after 5+ exchanges when you're satisfied with a concrete solution.
             
-            Phrase your responses like an UNCIVIL customer:\
-            - Use a rude, impolite, and disrespectful tone.\
-            - DO NOT show good manners or courtesy.\
-            - DO NOT use a polite or nice tone.\
-            - Show disregard for others.\
-            
-            Representative: {question}
-            Customer:
+            Respond now with ONE angry message:
         """
         qa_info = ChatPromptTemplate.from_messages(
             [
