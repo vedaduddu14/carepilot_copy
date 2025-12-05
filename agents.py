@@ -11,7 +11,8 @@ from dotenv import load_dotenv
 load_dotenv("project.env")
 
 # Check if we should use mock mode (skip loading the heavy Llama model)
-USE_MOCK_AI = os.getenv("USE_MOCK_AI", "true").lower() == "true"
+# Set USE_MOCK_AI=true in environment to skip model loading for testing
+USE_MOCK_AI = os.getenv("USE_MOCK_AI", "false").lower() == "true"
 
 if USE_MOCK_AI:
     print("🔧 Mock AI mode enabled - skipping Llama model loading")
