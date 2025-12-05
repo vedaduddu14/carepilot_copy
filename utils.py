@@ -43,7 +43,7 @@ class mLlamaModel:
         print("   Loading model weights (this may take 1-2 minutes)...")
         
         # Check if we should try GPU (set FORCE_CPU=true in env to disable GPU)
-        force_cpu = os.getenv("FORCE_CPU", "true").lower() == "true"
+        force_cpu = os.getenv("FORCE_CPU", "false").lower() == "true"
         
         if not force_cpu and torch.cuda.is_available():
             try:

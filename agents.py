@@ -10,31 +10,40 @@ import re
 from dotenv import load_dotenv
 load_dotenv("project.env")
 
-# Initialize local Llama model instead of Azure OpenAI
-try:
-    # Load the local Llama model
-    llama_model = mLlamaModel(
-        model_path=os.getenv("LLAMA_MODEL_PATH", "/srv/local/common_resources/models/Llama-3.1-8B-Instruct"),
-        temperature=0.1
-    )
+# Check if we should use mock mode (skip loading the heavy Llama model)
+USE_MOCK_AI = os.getenv("USE_MOCK_AI", "true").lower() == "true"
 
-    # Use the same LLM instance for all agents (you can create separate instances with different temps if needed)
-    llmchat = llama_model.get_llm()
-    llminfo = llama_model.get_llm()
-    llmemo = llama_model.get_llm()
-
-    # For embeddings, we'll need to use a local embedding model or keep Azure for now
-    # You can add a local embedding model later if needed
-    embeddings = None  # TODO: Add local embeddings model if needed
-
-    print("✓ Local Llama model initialized successfully")
-except Exception as e:
-    print(f"⚠️  Warning: Failed to load local Llama model. AI agents disabled.")
-    print(f"   Error: {e}")
+if USE_MOCK_AI:
+    print("🔧 Mock AI mode enabled - skipping Llama model loading")
+    print("   Set USE_MOCK_AI=false to use the real Llama model")
     embeddings = None
     llmchat = None
     llminfo = None
     llmemo = None
+else:
+    # Initialize local Llama model instead of Azure OpenAI
+    try:
+        # Load the local Llama model
+        llama_model = mLlamaModel(
+            model_path=os.getenv("LLAMA_MODEL_PATH", "/srv/local/common_resources/models/Llama-3.1-8B-Instruct"),
+            temperature=0.1
+        )
+
+        # Use the same LLM instance for all agents
+        llmchat = llama_model.get_llm()
+        llminfo = llama_model.get_llm()
+        llmemo = llama_model.get_llm()
+
+        embeddings = None  # TODO: Add local embeddings model if needed
+
+        print("✓ Local Llama model initialized successfully")
+    except Exception as e:
+        print(f"⚠️  Warning: Failed to load local Llama model. AI agents disabled.")
+        print(f"   Error: {e}")
+        embeddings = None
+        llmchat = None
+        llminfo = None
+        llmemo = None
 
 
 categories = {
