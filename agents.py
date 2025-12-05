@@ -602,7 +602,8 @@ def agent_sender_fewshot_twitter_categorized():
                 Category: {category}
                 Domain: {domain}
                 Feeling: You are {is_grateful}. You are {is_ranting}. You are {is_expression}.\
-                Complaint:
+                
+                Generate ONLY the complaint message (1-2 sentences). Do not include Category, Domain, Feeling, or any labels. Output only the customer's complaint:
             """
     template = ChatPromptTemplate.from_messages(
         [
