@@ -39,32 +39,41 @@ class mLlamaModel:
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
-        # Load model with GPU support (with fallback to CPU)
+        # Load model - FORCE CPU due to CUDA kernel compatibility issues on server
         print("   Loading model weights (this may take 1-2 minutes)...")
         
-        # Try GPU first, fall back to CPU if CUDA fails
-        use_gpu = torch.cuda.is_available()
+        # Check if we should try GPU (set FORCE_CPU=true in env to disable GPU)
+        force_cpu = os.getenv("FORCE_CPU", "true").lower() == "true"
         
-        if use_gpu:
+        if not force_cpu and torch.cuda.is_available():
             try:
                 print(f"   ✓ CUDA available - attempting GPU: {torch.cuda.get_device_name(0)}")
                 self.model = AutoModelForCausalLM.from_pretrained(
                     model_path,
-                    torch_dtype=torch.float16,  # Use half precision for GPU
-                    device_map="auto",  # Automatically distribute across available GPUs
+                    torch_dtype=torch.float16,
+                    device_map="auto",
                     low_cpu_mem_usage=True,
                     local_files_only=True,
                     trust_remote_code=True
                 )
-                # Test that the model works on GPU
-                print("   ✓ GPU model loaded successfully")
+                # Test inference to make sure GPU actually works
+                print("   Testing GPU inference...")
+                test_input = self.tokenizer("Hello", return_tensors="pt").to(self.model.device)
+                with torch.no_grad():
+                    self.model.generate(**test_input, max_new_tokens=1)
+                print("   ✓ GPU model loaded and tested successfully")
             except Exception as e:
-                print(f"   ⚠️  GPU loading failed: {str(e)[:100]}")
-                print("   ⚠️  Falling back to CPU (will be slower)...")
-                use_gpu = False
+                print(f"   ⚠️  GPU failed: {str(e)[:100]}")
+                print("   ⚠️  Falling back to CPU...")
+                # Clear GPU memory
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+                force_cpu = True
+        else:
+            force_cpu = True
         
-        if not use_gpu:
-            print("   📍 Loading model on CPU...")
+        if force_cpu:
+            print("   📍 Loading model on CPU (this is slower but reliable)...")
             self.model = AutoModelForCausalLM.from_pretrained(
                 model_path,
                 torch_dtype=torch.float32,
