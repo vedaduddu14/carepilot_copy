@@ -432,10 +432,16 @@ class mAgentCustomer:
             Respond to the question as if you were the customer. \
             Do NOT reveal your role.\
             
-            If the user is asking for a specific detail, respond with a believable answer.\
-            If customer has agreed with response then respond with "FINISH:999"
-            After 10 - 12 turns, respond with messages to close the conversation.\
-            After 12 turns, do NOT respond further, only respond with "FINISH:999".\
+            If the representative is asking for a specific detail, respond with a believable answer.\
+            
+            IMPORTANT: Do NOT end the conversation early. Keep the conversation going for at least 5-6 turns.
+            Only respond with "FINISH:999" when ALL of these conditions are met:
+            1. The representative has offered a concrete solution (refund, compensation, fix)
+            2. You (the customer) are satisfied with the proposed resolution
+            3. At least 5 turns have passed
+            
+            After 10-12 turns, start wrapping up the conversation.
+            After 12 turns, respond with "FINISH:999" to end.\
             
             Phrase your responses like an CIVIL customer:\
             - Talk in a gentle, polite, and respectful tone of voice.\
@@ -473,9 +479,15 @@ class mAgentCustomer:
             Ensure every turn is one to three sentences, and DO NOT make it too long to read.\
             
             If the representative is asking for a specific detail, respond with a believable answer.\
-            If customer has agreed with response then respond with "FINISH:999"
-            After 10 - 12 turns, respond with messages to close the conversation.\
-            After 12 turns, do NOT respond further, only respond with "FINISH:999".\
+            
+            IMPORTANT: Do NOT end the conversation early. Keep the conversation going for at least 5-6 turns.
+            Only respond with "FINISH:999" when ALL of these conditions are met:
+            1. The representative has offered a concrete solution (refund, compensation, fix)
+            2. You (the customer) are satisfied with the proposed resolution
+            3. At least 5 turns have passed
+            
+            After 10-12 turns, start wrapping up the conversation.
+            After 12 turns, respond with "FINISH:999" to end.\
             
             Phrase your responses like an UNCIVIL customer:\
             - Use a rude, impolite, and disrespectful tone.\
