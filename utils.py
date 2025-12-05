@@ -41,10 +41,11 @@ class mLlamaModel:
 
         # Load model with explicit settings
         print("   Loading model weights (this may take 1-2 minutes)...")
+        # Force CPU usage due to CUDA incompatibility with newer GPU architectures
         self.model = AutoModelForCausalLM.from_pretrained(
             model_path,
-            torch_dtype=torch.float16,
-            device_map="auto",
+            torch_dtype=torch.float32,  # Use float32 for CPU
+            device_map="cpu",  # Force CPU since GPU architecture is too new for PyTorch
             low_cpu_mem_usage=True,
             local_files_only=True,
             trust_remote_code=True
