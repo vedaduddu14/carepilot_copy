@@ -1,7 +1,8 @@
 import os
 
 import langchain_openai as lcai
-from utils import mLangChain, mLlamaModel
+from langchain_openai import ChatOpenAI
+from utils import mLangChain
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -10,41 +11,42 @@ import re
 from dotenv import load_dotenv
 load_dotenv("project.env")
 
-# Check if we should use mock mode (skip loading the heavy Llama model)
-# Set USE_MOCK_AI=true in environment to skip model loading for testing
-USE_MOCK_AI = os.getenv("USE_MOCK_AI", "false").lower() == "true"
-
-if USE_MOCK_AI:
-    print("🔧 Mock AI mode enabled - skipping Llama model loading")
-    print("   Set USE_MOCK_AI=false to use the real Llama model")
+# Initialize OpenAI GPT-5 nano model
+try:
+    print("🔧 Initializing OpenAI GPT-5 nano model...")
+    
+    # Get API key from environment
+    openai_api_key = os.getenv("OPENAI_API_KEY")
+    if not openai_api_key:
+        raise ValueError("OPENAI_API_KEY not found in environment variables")
+    
+    # Initialize OpenAI model with gpt-5-nano
+    llmchat = ChatOpenAI(
+        model="gpt-5-nano",
+        temperature=1.0,
+        api_key=openai_api_key
+    )
+    llminfo = ChatOpenAI(
+        model="gpt-5-nano",
+        temperature=1.0,
+        api_key=openai_api_key
+    )
+    llmemo = ChatOpenAI(
+        model="gpt-5-nano",
+        temperature=1.0,
+        api_key=openai_api_key
+    )
+    
+    embeddings = None  # Not needed for basic chat functionality
+    
+    print("✓ OpenAI GPT-5 nano initialized successfully")
+except Exception as e:
+    print(f"⚠️  Warning: Failed to initialize OpenAI model. AI agents disabled.")
+    print(f"   Error: {e}")
     embeddings = None
     llmchat = None
     llminfo = None
     llmemo = None
-else:
-    # Initialize local Llama model instead of Azure OpenAI
-    try:
-        # Load the local Llama model
-        llama_model = mLlamaModel(
-            model_path=os.getenv("LLAMA_MODEL_PATH", "/srv/local/common_resources/models/Llama-3.1-8B-Instruct"),
-            temperature=0.1
-        )
-
-        # Use the same LLM instance for all agents
-        llmchat = llama_model.get_llm()
-        llminfo = llama_model.get_llm()
-        llmemo = llama_model.get_llm()
-
-        embeddings = None  # TODO: Add local embeddings model if needed
-
-        print("✓ Local Llama model initialized successfully")
-    except Exception as e:
-        print(f"⚠️  Warning: Failed to load local Llama model. AI agents disabled.")
-        print(f"   Error: {e}")
-        embeddings = None
-        llmchat = None
-        llminfo = None
-        llmemo = None
 
 
 categories = {
@@ -435,7 +437,7 @@ class mAgentCustomer:
             If the representative asks for details, provide a believable answer.
             Stay in character as a civil, polite customer.
             
-            Only say "FINISH:999" after 5+ exchanges when you're satisfied with a concrete solution.
+            Only say "FINISH:" after 5+ exchanges when you're satisfied with a concrete solution.
             
             Respond now with ONE message:
         """
@@ -467,7 +469,7 @@ class mAgentCustomer:
             If the representative asks for details, provide a believable answer.
             Stay in character as an uncivil, rude, impatient customer. Be frustrated and demanding.
             
-            Only say "FINISH:999" after 5+ exchanges when you're satisfied with a concrete solution.
+            Only say "FINISH:" after 5+ exchanges when you're satisfied with a concrete solution.
             
             Respond now with ONE angry message:
         """
@@ -495,8 +497,78 @@ class mAgentCustomer:
         else:
             ai_msg = self.uncivil_chain.invoke({"chat_history": user_input['chat_history'], "question": user_input['input'], "civil": user_input['civil']})
 
-        # Handle both string output (HuggingFace) and message object (OpenAI)
-        return ai_msg.content if hasattr(ai_msg, 'content') else str(ai_msg)
+        # Handle both string output
+        raw = ai_msg.content if hasattr(ai_msg, 'content') else str(ai_msg)
+        
+        # DEBUG: Log raw output to check for FINISH:
+        print("\n" + "="*80)
+        print("DEBUG RAW OUTPUT (first 500 chars):")
+        print(raw[:500])
+        print(f"DEBUG: Contains FINISH? {'FINISH:' in raw}")
+        print("="*80 + "\n")
+
+        
+        # ✅ FIRST: Special handling for meta-text patterns that come BEFORE actual content
+        # Qwen generates instructional text like "Please respond", "Remember to stay in character", etc.
+        meta_text_patterns = [
+            "Please respond",
+            "Remember to stay in character",
+            "Remember to",
+            "Type your response",
+            "I will respond as",
+            "Let's get this over with",
+            "Go ahead and type",
+            "I'm waiting",
+        ]
+        
+        # If we detect meta-text, try to find where actual content starts
+        for pattern in meta_text_patterns:
+            if pattern in raw:
+                # Look for common transition markers that indicate actual response starts
+                transitions = ["Fine...", "Here we go", "Room ", "Okay", "Alright"]
+                for transition in transitions:
+                    if transition in raw:
+                        # Keep from this transition onwards
+                        raw = raw[raw.index(transition):]
+                        break
+                break
+        
+        # Special case: If "Response:" appears, keep everything AFTER it
+        if "Response:" in raw:
+            raw = raw[raw.index("Response:") + len("Response:"):]
+        
+        stop_sequences = [
+            "\n\nHuman:",
+            "\n\nRepresentative:",
+            "\nRepresentative:",
+            "\nCustomer:",
+            "FINISH:",
+            "\nHuman:",
+            "\nAI Response:",
+            "\nAI:",
+        ]
+        
+        for stop_seq in stop_sequences:
+            if stop_seq in raw:
+                raw = raw[:raw.index(stop_seq)]
+                break
+        
+        # ✅ THEN: Clean the truncated output
+        cleaned = raw.strip().strip('"').strip("'").strip()
+        
+        # Remove any leading junk and meta-text (multiple passes)
+        for _ in range(5):  # Increased from 3 to 5 passes for Qwen
+            cleaned = re.sub(r'^\s*!+\s*', '', cleaned)  # Remove leading exclamation marks
+            cleaned = re.sub(r'^[\.\s]+'  , ''  , cleaned)
+            cleaned = re.sub(
+                r'^\s*(Response:|AI:?|Your turn|What\.s your response|Response( should be)?:|My [Rr]esponse( is)?:|Customer [Rr]esponse( is)?:|AI Response:|Please respond|Type your|Go ahead|Here we go\.\.\.)\s*', 
+                '', 
+                cleaned, 
+                flags=re.IGNORECASE
+            )
+            cleaned = cleaned.strip()
+        
+        return cleaned
 
     def __init__(self):
             self.history_chain = self.get_historical_context_chain()

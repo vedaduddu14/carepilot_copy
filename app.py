@@ -407,24 +407,9 @@ def getReply(session_id):
             show_info = '0'
             show_emo = '0'
         elif current_round == 2:
-            # Apply treatment for Round 2
-            if treatment_group == 'control':
-                show_info = '0'
-                show_emo = '0'
-            elif treatment_group == 'information':
-                show_info = '1'
-                show_emo = '0'
-            elif treatment_group == 'emotion':
-                show_info = '0'
-                show_emo = '1'
-            elif treatment_group == 'both':
-                show_info = '1'
-                show_emo = '1'
-            else:
-                # Default to control if no treatment assigned
-                show_info = '0'
-                show_emo = '0'
-
+            # TEMP TEST: Force both agents enabled for testing
+            show_info = "1"
+            show_emo = "1"
         complaint_parameters = {
             "domain": val_domain,
             "category": val_category,
@@ -509,17 +494,32 @@ def getReply(session_id):
 
         # Try to use Azure OpenAI, fall back to mock if connection fails
         try:
-            result = sender_agent.invoke({"input": prompt, "chat_history": chat_history, "civil": session[session_id][client_id]["civil"]})
-            response = result
-            # Post-process: Extract only the first response (stop at "Representative:" if model over-generates)
-            if "Representative:" in response:
-                response = response.split("Representative:")[0].strip()
-            if "Customer:" in response:
-                # Take only the first customer response
-                response = response.split("Customer:")[0].strip()
-            # Also stop at excessive newlines
-            if "\n\n" in response:
-                response = response.split("\n\n")[0].strip()
+            # TEMP TEST: Different turn limits for each round
+            current_round = session[session_id].get("current_round", 1)
+            turn_limit = 3 if current_round == 1 else 9
+            turn_count = len(chat_history) // 2
+            print(f"🔍 DEBUG: Turn count = {turn_count}, Round = {current_round}, Turn limit = {turn_limit}")
+
+            if turn_count >= turn_limit:
+                endings = [
+                    "Fine, I will just deal with this myself. This conversation is going nowhere. FINISH:999",
+                    "You know what, forget it. I am done trying to get help from you. FINISH:999",
+                    "This is taking too long and getting nowhere. I will handle this another way. FINISH:999",
+                ]
+                result = random.choice(endings)
+                response = result
+            else:
+                result = sender_agent.invoke({"input": prompt, "chat_history": chat_history, "civil": session[session_id][client_id]["civil"]})
+                response = result
+                # Post-process: Extract only the first response (stop at "Representative:" if model over-generates)
+                if "Representative:" in response:
+                    response = response.split("Representative:")[0].strip()
+                if "Customer:" in response:
+                    # Take only the first customer response
+                    response = response.split("Customer:")[0].strip()
+                # Also stop at excessive newlines
+                if "\n\n" in response:
+                    response = response.split("\n\n")[0].strip()
         except Exception as e:
             # Simple mock conversation logic
             print(f"⚠️  Azure OpenAI failed, using mock client response: {str(e)[:100]}")
@@ -1039,6 +1039,8 @@ def getClientHistory(session_id, client_id):
 def getClientList(session_id):
     clients_info = list(chat_client_info.find({"session_id": session_id}, {"_id": 0, "client_name": 1, "client_id": 1, "category":1}))
     return jsonify({"clients_info": clients_info})
+
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, threaded=True)

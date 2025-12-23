@@ -21,8 +21,8 @@ class mLlamaModel:
     Wrapper for local Llama-3.1-8B-Instruct model using HuggingFace transformers.
     Provides a compatible interface with Azure OpenAI clients for easy migration.
     """
-    def __init__(self, model_path="/srv/local/common_resources/models/Llama-3.1-8B-Instruct", temperature=0.1, max_new_tokens=512):
-        print(f"Loading Llama model from {model_path}...")
+    def __init__(self, model_path="/srv/local/common_resources/models/Qwen2.5-7B-Instruct", temperature=0.1, max_new_tokens=256):
+        print(f"Loading Qwen model from {model_path}...")
 
         # Set HF cache directory if using shared models
         cache_dir = os.getenv("HF_HOME", "/srv/local/common_resources/models/transformers_cache")
@@ -109,7 +109,7 @@ class mLlamaModel:
             pipeline_kwargs={"stop_sequence": stop_sequences[0]}  # Stop at first "Category:"
         )
 
-        print("✓ Llama model loaded successfully")
+        print("✓ Qwen model loaded successfully")
 
     def get_llm(self):
         """Return the LangChain-compatible LLM instance"""
